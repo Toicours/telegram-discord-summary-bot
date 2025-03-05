@@ -1,0 +1,7 @@
+telethon
+discord.py
+requests
+python-dotenv
+apscheduler
+openai
+# Optional: anthropic

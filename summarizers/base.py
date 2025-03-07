@@ -16,12 +16,13 @@ class BaseSummarizer(ABC):
         self.api_key = api_key
     
     @abstractmethod
-    def generate_summary(self, message_texts):
+    def generate_summary(self, message_texts, topic_name=None):
         """
         Generate a summary from message texts
         
         Args:
             message_texts (list): List of text messages
+            topic_name (str, optional): Name of the topic or channel
             
         Returns:
             str: Generated summary

@@ -2,22 +2,29 @@
 Summarizer Factory Module
 
 This module provides a factory function for creating LLM summarizers and
-handles the selection of appropriate summarizer classes based on the provider.
+handles the dynamic selection of appropriate summarizer classes based on 
+the configured provider.
+
+The module supports multiple LLM providers and allows easy extensibility
+for adding new summarization services.
+
+Key Features:
+- Dynamic summarizer creation
+- Provider-based selection
+- Debugging and tracing of provider selection
 """
 
 from summarizers.base import BaseSummarizer
 from summarizers.deepseek import DeepSeekSummarizer
 from summarizers.anthropic import AnthropicSummarizer
 
-ANTHROPIC_AVAILABLE = True
-
 def create_summarizer(provider, api_key):
     """
     Factory function to create the appropriate LLM summarizer based on the provider.
     
-    Dynamically selects and instantiates a summarizer class (DeepSeek or Anthropic)
-    based on the configured LLM provider. Includes debug print statements to help
-    troubleshoot provider selection.
+    This function dynamically selects and instantiates a summarizer class 
+    (DeepSeek or Anthropic) based on the configured LLM provider. It includes 
+    comprehensive debugging to help troubleshoot provider selection.
     
     Args:
         provider (LLMProvider): Enum value specifying the desired LLM provider 
@@ -31,14 +38,19 @@ def create_summarizer(provider, api_key):
         ValueError: If an unsupported LLM provider is specified.
         
     Debugging:
-        Prints debug information about the provider type, value, and comparisons.
+        Prints detailed information about the provider type, value, and comparisons
+        to aid in troubleshooting provider selection.
     """
     from config import LLMProvider
     
-    print(f"DEBUG: Provider type: {type(provider)}")
-    print(f"DEBUG: Provider value: {provider}")
-    print(f"DEBUG: Provider comparison (Deepseek): {provider == LLMProvider.DEEPSEEK}")
-    print(f"DEBUG: Provider comparison (Anthropic): {provider == LLMProvider.ANTHROPIC}")
+    print("=" * 50)
+    print("DETAILED PROVIDER DEBUGGING:")
+    print(f"Provider: {provider}")
+    print(f"Provider Type: {type(provider)}")
+    print(f"Provider Value: {provider.value}")
+    print(f"Provider Comparison (Deepseek): {provider == LLMProvider.DEEPSEEK}")
+    print(f"Provider Comparison (Anthropic): {provider == LLMProvider.ANTHROPIC}")
+    print("=" * 50)
     
     if provider == LLMProvider.DEEPSEEK:
         return DeepSeekSummarizer(api_key)

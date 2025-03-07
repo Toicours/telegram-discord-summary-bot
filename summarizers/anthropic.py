@@ -31,9 +31,14 @@ class AnthropicSummarizer(BaseSummarizer):
             # Combine messages
             combined_text = "\n".join(message_texts)
             
+            # Truncate text if too long
+            max_tokens = 8000
+            if len(combined_text) > max_tokens:
+                combined_text = combined_text[-max_tokens:]
+            
             # Claude API call
             response = self.client.messages.create(
-                model="claude-3-sonnet-20240229",
+                model="claude-3-7-sonnet-20250219",  # Claude 3.5 Sonnet model
                 max_tokens=1000,
                 messages=[
                     {
@@ -47,4 +52,4 @@ class AnthropicSummarizer(BaseSummarizer):
         
         except Exception as e:
             logger.error(f'Anthropic summary generation error: {e}')
-            return "Unable to generate summary with Anthropic."
+            return f"Unable to generate summary with Anthropic. Error: {str(e)}"

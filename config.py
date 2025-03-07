@@ -33,6 +33,9 @@ def load_configuration():
         'TELEGRAM_TOPIC_IDS': topic_ids,  # List of topic IDs to monitor
         'INCLUDE_MAIN_CHANNEL': os.getenv('INCLUDE_MAIN_CHANNEL', 'true').lower() == 'true',
         
+        # Message history configuration
+        'MESSAGE_HISTORY_DAYS': int(os.getenv('MESSAGE_HISTORY_DAYS', '1')),
+        
         # Discord configuration
         'DISCORD_TOKEN': os.getenv('DISCORD_TOKEN'),
         'DISCORD_DESTINATION_CHANNEL_ID': int(os.getenv('DISCORD_DESTINATION_CHANNEL_ID')),

@@ -23,6 +23,17 @@ def load_configuration():
     if topic_ids_str:
         topic_ids = [int(id_str) for id_str in topic_ids_str.split(',') if id_str.strip()]
     
+    # Determine LLM provider
+    llm_provider = LLMProvider(os.getenv('LLM_PROVIDER', 'deepseek'))
+    
+    # Get the appropriate API key based on the provider
+    if llm_provider == LLMProvider.ANTHROPIC:
+        llm_api_key = os.getenv('ANTHROPIC_API_KEY')
+    elif llm_provider == LLMProvider.DEEPSEEK:
+        llm_api_key = os.getenv('DEEPSEEK_API_KEY')
+    else:
+        llm_api_key = None
+    
     # Create configuration dictionary
     config = {
         # Telegram configuration
@@ -41,12 +52,21 @@ def load_configuration():
         'DISCORD_DESTINATION_CHANNEL_ID': int(os.getenv('DISCORD_DESTINATION_CHANNEL_ID')),
         
         # LLM configuration
-        'LLM_PROVIDER': LLMProvider(os.getenv('LLM_PROVIDER', 'deepseek')),
-        'LLM_API_KEY': os.getenv('LLM_API_KEY'),
+        'LLM_PROVIDER': llm_provider,
+        'LLM_API_KEY': llm_api_key,
+        
+        # Provider-specific keys (for reference/debugging)
+        'ANTHROPIC_API_KEY': os.getenv('ANTHROPIC_API_KEY'),
+        'DEEPSEEK_API_KEY': os.getenv('DEEPSEEK_API_KEY'),
         
         # Scheduling
         'SUMMARY_HOUR': int(os.getenv('SUMMARY_HOUR', 23)),
         'SUMMARY_MINUTE': int(os.getenv('SUMMARY_MINUTE', 0))
     }
+    
+    # Validate LLM configuration
+    if not config['LLM_API_KEY']:
+        provider_name = config['LLM_PROVIDER'].value.upper()
+        raise ValueError(f"Missing API key for {provider_name}. Please set {provider_name}_API_KEY in your .env file.")
     
     return config

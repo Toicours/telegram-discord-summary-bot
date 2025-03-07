@@ -1,6 +1,7 @@
 import logging
 from openai import OpenAI
 from summarizers.base import BaseSummarizer
+from utils.prompts import PromptTemplates
 
 # Get logger
 logger = logging.getLogger(__name__)
@@ -21,49 +22,51 @@ class DeepSeekSummarizer(BaseSummarizer):
             base_url="https://api.deepseek.com"
         )
     
-    def generate_summary(self, message_texts):
-        """
-        Generate summary using DeepSeek API (OpenAI-compatible format)
-        
-        Args:
-            message_texts (list): List of message texts
-            
-        Returns:
-            str: Generated summary
-        """
+    def generate_summary(
+        self, 
+        message_texts, 
+        topic_name=None, 
+        prompt_type=None, 
+        override_system_prompt=None, 
+        override_user_prompt=None
+    ):
         try:
             # Combine messages
             combined_text = "\n".join(message_texts)
             
+            # Limit combined text length
+            max_tokens = 8000
+            if len(combined_text) > max_tokens:
+                combined_text = combined_text[-max_tokens:]
+            
+            # Get appropriate prompts with potential overrides
+            prompts = PromptTemplates.get_prompts(
+                topic_name=topic_name, 
+                prompt_type=prompt_type,
+                override_system_prompt=override_system_prompt,
+                override_user_prompt=override_user_prompt
+            )
+            
             # Log message count
             logger.info(f"Sending {len(message_texts)} messages to DeepSeek API")
             
-            # Use OpenAI-compatible format for DeepSeek with specialized DeFi prompt
+            # Use OpenAI-compatible format for DeepSeek
             response = self.client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
                     {
                         "role": "system", 
-                        "content": """You are a DeFi analyst specializing in summarizing discussions about liquidity provision, 
-                        yield farming, and whale activity in cryptocurrency markets. Focus on extracting key information about:
-                        
-                        1. Specific yield farming opportunities mentioned (protocols, APY rates, tokens)
-                        2. Liquidity provider strategies and deals
-                        3. Notable market movements or whale activities
-                        4. Risk assessments or warnings about specific protocols
-                        5. New DeFi protocols or strategies being discussed
-                        6. Technical details about farms, pools, or liquidity positions
-                        
-                        Use crypto terminology appropriately and be precise about numbers, percentages, and token symbols.
-                        Structure your summary in a clear, actionable format highlighting the most valuable insights for liquidity providers."""
+                        "content": prompts['system_prompt']
                     },
                     {
                         "role": "user", 
-                        "content": f"""Analyze and summarize the following DeFi/crypto discussion, focusing on actionable insights, 
-                        yield opportunities, and liquidity provision strategies. Extract specific numbers, APYs, protocols, and 
-                        technical details where available:
-
-                        {combined_text}"""
+                        "content": PromptTemplates.format_user_prompt(
+                            combined_text, 
+                            topic_name=topic_name,
+                            prompt_type=prompt_type,
+                            override_system_prompt=override_system_prompt,
+                            override_user_prompt=override_user_prompt
+                        )
                     }
                 ],
                 max_tokens=1000

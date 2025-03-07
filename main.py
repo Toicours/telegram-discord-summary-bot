@@ -127,20 +127,36 @@ class TelegramToDiscordBot:
         except Exception as e:
             logger.error(f'Daily summary generation and posting failed: {e}')
     
-    async def _process_and_post_summary(self, messages, title):
+    async def _process_and_post_summary(
+        self, 
+        messages, 
+        title, 
+        prompt_type=None, 
+        override_system_prompt=None, 
+        override_user_prompt=None
+    ):
         """
         Process messages and post summary for a specific topic or channel
         
         Args:
             messages (list): List of messages to summarize
             title (str): Title for the summary (e.g., topic name)
+            prompt_type (str, optional): Explicitly specify prompt type
+            override_system_prompt (str, optional): Custom system prompt
+            override_user_prompt (str, optional): Custom user prompt
         """
         if not messages:
             logger.info(f"No messages found to summarize for {title}")
             return
         
-        # Generate summary
-        summary = self.summarizer.generate_summary(messages)
+        # Generate summary with additional prompt options
+        summary = self.summarizer.generate_summary(
+            messages, 
+            topic_name=title, 
+            prompt_type=prompt_type,
+            override_system_prompt=override_system_prompt,
+            override_user_prompt=override_user_prompt
+        )
         
         # Post to Discord
         provider_name = self.config['LLM_PROVIDER'].name.capitalize()

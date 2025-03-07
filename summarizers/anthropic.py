@@ -1,6 +1,7 @@
 import logging
 from anthropic import Anthropic
 from summarizers.base import BaseSummarizer
+from utils.prompts import PromptTemplates
 
 logger = logging.getLogger(__name__)
 
@@ -17,16 +18,14 @@ class AnthropicSummarizer(BaseSummarizer):
         super().__init__(api_key)
         self.client = Anthropic(api_key=api_key)
     
-    def generate_summary(self, message_texts):
-        """
-        Generate summary using Anthropic Claude API
-        
-        Args:
-            message_texts (list): List of message texts
-            
-        Returns:
-            str: Generated summary
-        """
+    def generate_summary(
+        self, 
+        message_texts, 
+        topic_name=None, 
+        prompt_type=None, 
+        override_system_prompt=None, 
+        override_user_prompt=None
+    ):
         try:
             # Combine messages
             combined_text = "\n".join(message_texts)
@@ -36,14 +35,29 @@ class AnthropicSummarizer(BaseSummarizer):
             if len(combined_text) > max_tokens:
                 combined_text = combined_text[-max_tokens:]
             
-            # Claude API call
+            # Get appropriate prompts with potential overrides
+            prompts = PromptTemplates.get_prompts(
+                topic_name=topic_name, 
+                prompt_type=prompt_type,
+                override_system_prompt=override_system_prompt,
+                override_user_prompt=override_user_prompt
+            )
+            
+            # API call with prompts
             response = self.client.messages.create(
-                model="claude-3-7-sonnet-20250219",  # Claude 3.5 Sonnet model
+                model="claude-3-7-sonnet-20250219",
                 max_tokens=1000,
+                system=prompts['system_prompt'],
                 messages=[
                     {
                         "role": "user",
-                        "content": f"Summarize the following conversation, highlighting key topics, notable interactions, and important information:\n\n{combined_text}"
+                        "content": PromptTemplates.format_user_prompt(
+                            combined_text, 
+                            topic_name=topic_name,
+                            prompt_type=prompt_type,
+                            override_system_prompt=override_system_prompt,
+                            override_user_prompt=override_user_prompt
+                        )
                     }
                 ]
             )
@@ -51,5 +65,5 @@ class AnthropicSummarizer(BaseSummarizer):
             return response.content[0].text
         
         except Exception as e:
-            logger.error(f'Anthropic summary generation error: {e}')
-            return f"Unable to generate summary with Anthropic. Error: {str(e)}"
+            logger.error(f'Summary generation error: {e}')
+            return f"Unable to generate summary. Error: {str(e)}"
